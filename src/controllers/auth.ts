@@ -172,10 +172,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   );
 
   // 4. Set cookie
+  const isProd = process.env.NODE_ENV === "production";
   res.cookie("token", token, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -193,7 +194,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  res.clearCookie("token");
+  const isProd = process.env.NODE_ENV === "production";
+  res.clearCookie("token", {
+    httpOnly: false,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  });
   res.status(200).json(
     new ApiResponse(
       true,
