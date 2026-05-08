@@ -5,8 +5,6 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { Request, Response } from "express";
 
-import { getVideoDurationInSeconds } from "get-video-duration";
-import { bufferToStream } from "../utils/bufferToStream";
 import { IUser, User } from "../models/User";
 import { Team } from "../models/Team";
 import { EvaluatorAssignment } from "../models/EvaluatorAssignment";
@@ -161,19 +159,6 @@ export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) 
         throw new ApiError(400, "Video and thumbnail are required");
     }
 
-    // ✅ Get video duration (in seconds)
-    const durationInSeconds = await getVideoDurationInSeconds(bufferToStream(videoFile.buffer));
-
-    // ✅ Ensure total seconds ≤ 5 minutes
-    if (durationInSeconds > 5 * 60) {
-        throw new ApiError(400, "Video duration cannot exceed 5 minutes");
-    }
-
-    // ✅ Convert to mm:ss
-    const minutes = Math.floor(durationInSeconds / 60);
-    const seconds = Math.floor(durationInSeconds % 60);
-    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-
     const team = await Team.findOne({
         $or: [
             { teamLeadId: userId },
@@ -188,15 +173,23 @@ export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) 
 
     const teamId = team._id;
 
-    // ✅ Upload video + thumbnail concurrently
+    // Upload video + thumbnail concurrently. Cloudinary returns video duration on upload.
     let videoUrl = "";
     let thumbnailUrl = "";
+    let videoPublicId = "";
+    let durationInSeconds = 0;
 
     try {
-        const uploadVideo = new Promise<string>((resolve, reject) => {
+        const uploadVideo = new Promise<{ url: string; publicId: string; duration: number }>((resolve, reject) => {
             cloudinary.uploader.upload_stream(
                 { resource_type: "video", folder: "submissions/videos" },
-                (err, result) => (err ? reject(err) : resolve(result?.secure_url || ""))
+                (err, result) => err
+                    ? reject(err)
+                    : resolve({
+                        url: result?.secure_url || "",
+                        publicId: result?.public_id || "",
+                        duration: result?.duration || 0,
+                    })
             ).end(videoFile.buffer);
         });
 
@@ -207,10 +200,25 @@ export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) 
             ).end(thumbnailFile.buffer);
         });
 
-        [videoUrl, thumbnailUrl] = await Promise.all([uploadVideo, uploadThumbnail]);
+        const [videoResult, thumb] = await Promise.all([uploadVideo, uploadThumbnail]);
+        videoUrl = videoResult.url;
+        videoPublicId = videoResult.publicId;
+        durationInSeconds = videoResult.duration;
+        thumbnailUrl = thumb;
     } catch (err) {
         throw new ApiError(500, "Error uploading video or thumbnail");
     }
+
+    if (durationInSeconds > 5 * 60) {
+        if (videoPublicId) {
+            await cloudinary.uploader.destroy(videoPublicId, { resource_type: "video" }).catch(() => {});
+        }
+        throw new ApiError(400, "Video duration cannot exceed 5 minutes");
+    }
+
+    const minutes = Math.floor(durationInSeconds / 60);
+    const seconds = Math.floor(durationInSeconds % 60);
+    const formattedDuration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
     // ✅ Save submission
     const submission = await Submission.create({
