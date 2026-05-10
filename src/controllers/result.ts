@@ -30,12 +30,9 @@ export const setResultStatus = asyncHandler(async (req: Request, res: Response) 
 
 
 export const getResult = asyncHandler(async (req: Request, res: Response) => {
-    const result = await Result.findOne({ isPublished: true });
-
-    if (!result) {
-        return res.status(404).json({ isPublished: false });
-    }
-
-    res.json({isPublished: result.isPublished});
+    const result = await Result.findOne();
+    
+    res.json({ 
+        isPublished: result?.isPublished ?? false 
+    });
 });
-
