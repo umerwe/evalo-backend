@@ -469,7 +469,7 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
         teamName: item.team.teamName,
         teamLead: item.teamLead.profile?.name,
         averageScore: item.averageScore,
-        thumbnail: item.submission.videoDetails.thumbnail,
+        thumbnail: item.submission.videoDetails.thumbnailKey,
         title: item.submission.videoDetails.title,
         topic: item.submission.videoDetails.topic,
         evaluatedAt: item.updatedAt,

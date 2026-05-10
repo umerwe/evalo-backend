@@ -12,6 +12,8 @@ import { Evaluation } from "../models/Evaluation";
 import mongoose from "mongoose";
 import { RecentActivity } from "../models/recentActivities";
 import { Result } from "../models/Result";
+import { deleteFromS3 } from "../services/s3.service";
+import { PendingUpload } from "../models/PendingUpload";
 
 interface AuthRequest extends Request {
     user?: IUser;
@@ -146,86 +148,68 @@ export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;
-    const { title, description, topic, learningOutcomes } = req.body;
+    const {
+        title,
+        description,
+        topic,
+        learningOutcomes,
+        videoKey,
+        thumbnailKey,
+        durationInSeconds,
+    } = req.body;
 
-    if (!title || !description || !topic || !learningOutcomes) {
-        throw new ApiError(400, "All fields are required including video and thumbnail file");
+    if (
+        !title || !description || !topic || !learningOutcomes ||
+        !videoKey || !thumbnailKey ||
+        durationInSeconds === undefined
+    ) {
+        throw new ApiError(400, "All fields are required including uploaded video and thumbnail info");
     }
 
-    const videoFile = (req.files as any)?.video?.[0];
-    const thumbnailFile = (req.files as any)?.thumbnail?.[0];
-
-    if (!videoFile || !thumbnailFile) {
-        throw new ApiError(400, "Video and thumbnail are required");
+    // 2. Validate duration (5 min max)
+    if (durationInSeconds > 5 * 60) {
+        // Delete the orphaned file from S3 since submission is invalid
+        await deleteFromS3(videoKey).catch(() => { });
+        await deleteFromS3(thumbnailKey).catch(() => { });
+        throw new ApiError(400, "Video duration cannot exceed 5 minutes");
     }
 
+    // 3. Find team
     const team = await Team.findOne({
         $or: [
             { teamLeadId: userId },
-            { "members": userId }
+            { members: userId }
         ]
     })
         .populate("teamLeadId", "-password -evaluationStats -isApproved")
         .populate("members", "profile email -_id");
 
-    if (!team) throw new ApiError(404, "Team not found");
-    if (team.status === "submitted") throw new ApiError(400, "Team already submitted");
+    if (!team) {
+        // Clean up uploaded files since submission won't go through
+        await deleteFromS3(videoKey).catch(() => { });
+        await deleteFromS3(thumbnailKey).catch(() => { });
+        throw new ApiError(404, "Team not found");
+    }
+
+    if (team.status === "submitted") {
+        await deleteFromS3(videoKey).catch(() => { });
+        await deleteFromS3(thumbnailKey).catch(() => { });
+        throw new ApiError(400, "Team already submitted");
+    }
 
     const teamId = team._id;
 
-    // Upload video + thumbnail concurrently. Cloudinary returns video duration on upload.
-    let videoUrl = "";
-    let thumbnailUrl = "";
-    let videoPublicId = "";
-    let durationInSeconds = 0;
-
-    try {
-        const uploadVideo = new Promise<{ url: string; publicId: string; duration: number }>((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-                { resource_type: "video", folder: "submissions/videos" },
-                (err, result) => err
-                    ? reject(err)
-                    : resolve({
-                        url: result?.secure_url || "",
-                        publicId: result?.public_id || "",
-                        duration: result?.duration || 0,
-                    })
-            ).end(videoFile.buffer);
-        });
-
-        const uploadThumbnail = new Promise<string>((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-                { resource_type: "image", folder: "submissions/thumbnails" },
-                (err, result) => (err ? reject(err) : resolve(result?.secure_url || ""))
-            ).end(thumbnailFile.buffer);
-        });
-
-        const [videoResult, thumb] = await Promise.all([uploadVideo, uploadThumbnail]);
-        videoUrl = videoResult.url;
-        videoPublicId = videoResult.publicId;
-        durationInSeconds = videoResult.duration;
-        thumbnailUrl = thumb;
-    } catch (err) {
-        throw new ApiError(500, "Error uploading video or thumbnail");
-    }
-
-    if (durationInSeconds > 5 * 60) {
-        if (videoPublicId) {
-            await cloudinary.uploader.destroy(videoPublicId, { resource_type: "video" }).catch(() => {});
-        }
-        throw new ApiError(400, "Video duration cannot exceed 5 minutes");
-    }
-
+    // 4. Format duration
     const minutes = Math.floor(durationInSeconds / 60);
     const seconds = Math.floor(durationInSeconds % 60);
     const formattedDuration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
-    // ✅ Save submission
+    // 5. Save submission
     const submission = await Submission.create({
         teamId,
         videoDetails: {
-            videoLink: videoUrl,
-            thumbnail: thumbnailUrl,
+            videoKey,
+            thumbnailKey,
             title,
             description,
             topic,
@@ -235,7 +219,12 @@ export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) 
         submissionStatus: "submitted",
     });
 
-    // ✅ Assign evaluators
+    await PendingUpload.deleteMany({
+        fileKey: { $in: [videoKey, thumbnailKey] }
+    });
+
+
+    // 6. Assign evaluators (unchanged)
     const assignedEvaluators = await User.find({
         userType: "evaluator",
         isApproved: true,
@@ -269,13 +258,11 @@ export const submitVideo = asyncHandler(async (req: AuthRequest, res: Response) 
 
     await Evaluation.insertMany(evaluationsToCreate);
 
-    // ✅ Update submission status to "under_review" after assigning evaluators
     await Submission.updateOne(
         { _id: submission._id },
         { submissionStatus: "under_review" }
     );
 
-    // ✅ Update team status to "submitted"
     await Team.updateOne({ _id: teamId }, { status: "submitted" });
 
     await RecentActivity.create({

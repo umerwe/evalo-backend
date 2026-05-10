@@ -3,8 +3,8 @@ import { Schema, model, Document, Types } from "mongoose";
 export interface ISubmission extends Document {
   teamId: Types.ObjectId;
   videoDetails: {
-    videoLink: string;
-    thumbnail: string;
+    videoKey: string;
+    thumbnailKey: string;
     title: string;
     description: string;
     topic: string;
@@ -19,14 +19,14 @@ const SubmissionSchema = new Schema<ISubmission>(
   {
     teamId: { type: Schema.Types.ObjectId, ref: "Team", required: true },
     videoDetails: {
-      videoLink: { type: String, required: true },
-      thumbnail: { type: String, required: true },
+      videoKey: { type: String, required: true },
+      thumbnailKey: { type: String, required: true },
       title: { type: String, required: true },
       description: String,
       topic: { type: String, required: true },
       learningOutcomes: { type: String, required: true },
       duration: { type: String, required: true },
-      platform: { type: String, default: "cloudinary" },
+      platform: { type: String, default: "s3" },
     },
     submissionStatus: {
       type: String,

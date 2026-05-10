@@ -223,11 +223,28 @@ export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
     delete userWithoutSensitive.evaluationStats;
   }
 
+  // For team users only — check if their team has submitted a video
+  let isVideoSubmitted: boolean | undefined;
+
+  if (user.userType === "team_lead" || user.userType === "team_member") {
+    const team = await Team.findOne({
+      $or: [
+        { teamLeadId: user._id },
+        { members: user._id },
+      ],
+    }).select("status").lean();
+
+    isVideoSubmitted = team?.status === "submitted";
+  }
+
   return res.status(200).json(
     new ApiResponse(
       true,
       "Profile fetched successfully",
-      userWithoutSensitive
+      {
+        ...userWithoutSensitive,
+        ...(isVideoSubmitted !== undefined && { isVideoSubmitted }),
+      }
     )
   );
 });

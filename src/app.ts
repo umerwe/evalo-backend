@@ -3,12 +3,13 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { connectDB } from './db';
+import "./jobs/cleanupOrphans";
 
 dotenv.config();
 
 const app = express();
 
-const allowedOrigins = (process.env.FRONTEND_URL || "")
+const allowedOrigins = (process.env.FRONTEND_URL!)
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
@@ -41,6 +42,7 @@ import evaluatorRoute from './routes/evaluator';
 import teamRoute from './routes/team';
 import technicalSupportRoute from './routes/technicalSupport';
 import resultStatus from './routes/result';
+import uploadRoute from './routes/upload.route';
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/admin', adminRoute);
@@ -48,6 +50,7 @@ app.use('/api/v1/evaluator', evaluatorRoute);
 app.use('/api/v1/team', teamRoute);
 app.use('/api/v1/technical-support', technicalSupportRoute);
 app.use('/api/v1/result', resultStatus);
+app.use('/api/v1/upload', uploadRoute);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Backend is running successfully 🚀");

@@ -336,6 +336,7 @@ export const evaluatedVideos = asyncHandler(async (req: AuthRequest, res: Respon
     evaluatorId: userId,
     evaluationStatus: "completed",
   })
+    .sort({ createdAt: -1 })
     .select('-scores')
     .populate({
       path: "submissionId",
@@ -348,7 +349,7 @@ export const evaluatedVideos = asyncHandler(async (req: AuthRequest, res: Respon
     _id: video.submissionId._id,
     teamName: video.submissionId.teamId?.teamName,
     totalScore: video.totalScore,
-    thumbnail: video.submissionId.videoDetails.thumbnail,
+    thumbnailKey: video.submissionId.videoDetails.thumbnailKey,
     title: video.submissionId.videoDetails.title,
     topic: video.submissionId.videoDetails.topic,
     createdAt: video.createdAt,

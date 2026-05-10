@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { evaluatorFeedback, getTeam, submitVideo ,result, detailedResult} from "../controllers/team";
-import upload from "../middlewares/upload";
 import { createRoleBasedJWTMiddleware } from "../middlewares/getUser";
 import { dashboard } from "../controllers/team";
 
@@ -10,10 +9,6 @@ router.get("/dashboard", createRoleBasedJWTMiddleware(), dashboard);
 
 router.post(
   "/submit-video",
-  upload.fields([
-    { name: "video", maxCount: 1 },
-    { name: "thumbnail", maxCount: 1 },
-  ]),
   createRoleBasedJWTMiddleware(),
   submitVideo
 );
