@@ -8,6 +8,7 @@ import { Submission } from "../models/Submission";
 import { EvaluatorAssignment } from "../models/EvaluatorAssignment";
 import { RecentActivity } from "../models/recentActivities";
 import { Result } from "../models/Result";
+import { buildPaginationMeta, getPaginationParams } from "../services/pagination.service";
 
 export const dashboard = asyncHandler(async (req: Request, res: Response) => {
     const stats = {
@@ -88,11 +89,18 @@ export const dashboard = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const evaluatorList = asyncHandler(async (req: Request, res: Response) => {
-    const evaluators = await User.find({ userType: "evaluator" });
-    const total = evaluators.length;
+    const { page, limit, skip } = getPaginationParams(req.query);
 
-    const approved = evaluators.filter((evaluator) => evaluator.isApproved === true).length;
+    const total = await User.countDocuments({ userType: "evaluator" });
+    const approved = await User.countDocuments({ userType: "evaluator", isApproved: true });
     const pending = total - approved;
+
+    const evaluators = await User.find({ userType: "evaluator" })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    const pagination = buildPaginationMeta(total, page, limit);
 
     return res
         .status(200)
@@ -104,7 +112,8 @@ export const evaluatorList = asyncHandler(async (req: Request, res: Response) =>
                     evaluators,
                     total,
                     approved,
-                    pending
+                    pending,
+                    pagination,
                 }));
 });
 
@@ -182,9 +191,7 @@ export const assignedEvaluators = asyncHandler(async (req: Request, res: Respons
 });
 
 export const teamList = asyncHandler(async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 10
-    const skip = (page - 1) * limit
+    const { page, limit, skip } = getPaginationParams(req.query)
 
     const userSelect = "profile.name -_id"
 
@@ -198,12 +205,14 @@ export const teamList = asyncHandler(async (req: Request, res: Response) => {
         .skip(skip)
         .limit(limit)
 
+    const { totalPages } = buildPaginationMeta(totalTeams, page, limit)
+
     return res.status(200).json(
         new ApiResponse(true, "Teams fetched successfully", {
             totalTeams,
             totalSubmitted,
             page,
-            totalPages: Math.ceil(totalTeams / limit),
+            totalPages,
             teams,
         })
     )
@@ -252,9 +261,7 @@ export const teamUser = asyncHandler(async (req: Request, res: Response) => {
 })
 
 export const videos = asyncHandler(async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = getPaginationParams(req.query);
 
     // Fetch video details + status + averageScore with pagination
         const videos = await EvaluatorAssignment.find()
@@ -313,12 +320,12 @@ export const videos = asyncHandler(async (req: Request, res: Response) => {
     });
 
     const total = submitted + underReview + evaluated;
-    const totalPages = Math.ceil(total / limit);
+    const pagination = buildPaginationMeta(total, page, limit);
 
     return res.status(200).json(
         new ApiResponse(true, "Videos fetched successfully", {
             videos: formattedVideos,
-            pagination: { total, page, limit, totalPages },
+            pagination,
             counts: { submitted, underReview, evaluated },
         })
     );
@@ -364,6 +371,10 @@ export const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const result = asyncHandler(async (req: Request, res: Response) => {
+    const { page, limit, skip } = getPaginationParams(req.query);
+
+    const total = await EvaluatorAssignment.countDocuments({ completedEvaluations: 3 });
+
     const evaluation = await EvaluatorAssignment.find({ completedEvaluations: 3 })
         .select("-assignedEvaluators -__v")
         .populate({
@@ -375,10 +386,9 @@ export const result = asyncHandler(async (req: Request, res: Response) => {
                 }
             }
         })
-
-    if (!evaluation) {
-        throw new ApiError(404, "Result not found");
-    }
+        .sort({ averageScore: -1 })
+        .skip(skip)
+        .limit(limit);
 
     const resultData = evaluation.map((item: any) => ({
         _id: item._id,
@@ -391,26 +401,32 @@ export const result = asyncHandler(async (req: Request, res: Response) => {
         evaluatedAt: item.updatedAt,
     }));
 
+    const pagination = buildPaginationMeta(total, page, limit);
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 true,
                 "Result Fetched successfully",
-                resultData
+                {
+                    results: resultData,
+                    pagination,
+                }
             ));
 });
 
 export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
     const { topic } = req.query;
+    const { page, limit, skip } = getPaginationParams(req.query);
 
     const result = await Result.findOne({ isPublished: true });
     if (!result) {
         throw new ApiError(404, "Result not Found.");
     }
 
-    // 🔹 Base pipeline
-    const pipeline: any[] = [
+    // 🔹 Base pipeline (filter only — used for both data and total)
+    const basePipeline: any[] = [
         {
             $match: {
                 completedEvaluations: 3,
@@ -427,9 +443,8 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
         { $unwind: "$submission" },
     ];
 
-    // 🔥 ADD topic filter ONLY if provided
     if (topic) {
-        pipeline.push({
+        basePipeline.push({
             $match: {
                 "submission.videoDetails.topic": {
                     $regex: `^${topic}$`,
@@ -439,8 +454,16 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
         });
     }
 
-    // 🔹 Remaining pipeline (unchanged)
-    pipeline.push(
+    // 🔹 Total count for pagination meta
+    const totalAgg = await EvaluatorAssignment.aggregate([
+        ...basePipeline,
+        { $count: "total" },
+    ]);
+    const total = totalAgg[0]?.total ?? 0;
+
+    // 🔹 Data pipeline adds joins, sort, and pagination
+    const dataPipeline: any[] = [
+        ...basePipeline,
         {
             $lookup: {
                 from: "teams",
@@ -459,10 +482,12 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
             },
         },
         { $unwind: "$teamLead" },
-        { $sort: { averageScore: -1 } }
-    );
+        { $sort: { averageScore: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+    ];
 
-    const leaderboard = await EvaluatorAssignment.aggregate(pipeline);
+    const leaderboard = await EvaluatorAssignment.aggregate(dataPipeline);
 
     const leaderboardData = leaderboard.map((item: any) => ({
         _id: item._id,
@@ -475,8 +500,13 @@ export const leaderboard = asyncHandler(async (req: Request, res: Response) => {
         evaluatedAt: item.updatedAt,
     }));
 
+    const pagination = buildPaginationMeta(total, page, limit);
+
     return res.status(200).json(
-        new ApiResponse(true, "Leaderboard Fetched successfully", leaderboardData)
+        new ApiResponse(true, "Leaderboard Fetched successfully", {
+            leaderboard: leaderboardData,
+            pagination,
+        })
     );
 });
 

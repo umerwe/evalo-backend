@@ -8,6 +8,7 @@ import { Evaluation } from "../models/Evaluation";
 import { Submission } from "../models/Submission";
 import { RecentActivity } from "../models/recentActivities";
 import { Result } from "../models/Result";
+import { buildPaginationMeta, getPaginationParams } from "../services/pagination.service";
 
 interface AuthRequest extends Request {
   user?: IUser;
@@ -115,12 +116,17 @@ export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) =>
 
 export const videos = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
+  const { page, limit, skip } = getPaginationParams(req.query);
+
+  const total = await Evaluation.countDocuments({ evaluatorId: userId });
 
   const assignedVideos = await Evaluation.find({
     evaluatorId: userId,
   })
     .select("-assignedEvaluators")
     .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .populate({
       path: "submissionId",
       populate: {
@@ -135,13 +141,15 @@ export const videos = asyncHandler(async (req: AuthRequest, res: Response) => {
     _id: video.submissionId._id,
   }));
 
+  const pagination = buildPaginationMeta(total, page, limit);
+
   return res
     .status(201)
     .json(
       new ApiResponse(
         true,
         "Videos Fetched Successfully",
-        videos
+        { videos, pagination }
       )
     );
 });
@@ -331,13 +339,20 @@ export const evaluate = asyncHandler(async (req: AuthRequest, res: Response) => 
 
 export const evaluatedVideos = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
+  const { page, limit, skip } = getPaginationParams(req.query);
 
-  const evaluatedVideos = await Evaluation.find({
+  const filter = {
     evaluatorId: userId,
     evaluationStatus: "completed",
-  })
+  };
+
+  const total = await Evaluation.countDocuments(filter);
+
+  const evaluatedVideos = await Evaluation.find(filter)
     .sort({ createdAt: -1 })
     .select('-scores')
+    .skip(skip)
+    .limit(limit)
     .populate({
       path: "submissionId",
       populate: {
@@ -355,11 +370,13 @@ export const evaluatedVideos = asyncHandler(async (req: AuthRequest, res: Respon
     createdAt: video.createdAt,
   }));
 
+  const pagination = buildPaginationMeta(total, page, limit);
+
   return res.status(200).json(
     new ApiResponse(
       true,
       "Evaluated Videos Fetched Successfully",
-      videos
+      { videos, pagination }
     )
   );
 });
