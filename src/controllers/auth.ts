@@ -51,6 +51,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (userType !== "team_lead") {
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password || "")) {
+      throw new ApiError(400, "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character");
+    }
+
     const hashedPassword = await bcrypt.hash(password || "", 10);
 
     const data = await User.create({
@@ -84,6 +90,13 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const leadName = `${leadFirstName} ${leadLastName}`.trim();
+  
+  // Validate password strength for team lead
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    throw new ApiError(400, "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character");
+  }
+  
   const hashedLeadPassword = await bcrypt.hash(password, 10);
   const teamLead = await User.create({
     userType: "team_lead",
