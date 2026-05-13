@@ -165,8 +165,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (userType === "evaluator") {
-    const user = await User.findOne({ email, userType, isApproved: true });
-    if (!user) {
+    const userApproved = await User.findOne({ email, userType, isApproved: true });
+    if (!userApproved) {
       throw new ApiError(400, "Evaluator not approved");
     }
   }
@@ -184,57 +184,20 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     { expiresIn: "7d" }
   );
 
-  // 4. Set cookie
-  const isProd = process.env.NODE_ENV === "production";
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",             
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  // res.cookie("token", token, {
-  //   httpOnly: false,
-  //   secure: isProd,
-  //   sameSite: isProd ? "none" : "lax",
-  //   path: "/",             
-  //   maxAge: 7 * 24 * 60 * 60 * 1000,
-  // });
-
-  // 5. Remove unwanted fields before sending user
+  // 4. Remove unwanted fields before sending user
   const { password: _, evaluationStats, isApproved, isActive, ...userData } = user.toObject();
 
-  // 6. Send response
+  // 5. Send response (Token included in body)
   res.status(200).json(
     new ApiResponse(
-      true,
-      "Login successful",
-      userData
+      true, 
+      "Login successful", 
+      { 
+        user: userData, 
+        token
+      }
     )
   );
-});
-
-export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const isProd = process.env.NODE_ENV === "production";
-
-
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",               
-  });
-
-  // res.clearCookie("token", {
-  //   httpOnly: false,
-  //   secure: isProd,           
-  //   sameSite: isProd ? "none" : "lax",
-  //   path: "/",               
-  // });
-
-  res.status(200).json(new ApiResponse(true, "Logout successful"));
 });
 
 export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
