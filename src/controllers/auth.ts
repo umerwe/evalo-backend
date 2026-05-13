@@ -186,13 +186,22 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   // 4. Set cookie
   const isProd = process.env.NODE_ENV === "production";
+
   res.cookie("token", token, {
     httpOnly: false,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",             
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+
+  // res.cookie("token", token, {
+  //   httpOnly: false,
+  //   secure: isProd,
+  //   sameSite: isProd ? "none" : "lax",
+  //   path: "/",             
+  //   maxAge: 7 * 24 * 60 * 60 * 1000,
+  // });
 
   // 5. Remove unwanted fields before sending user
   const { password: _, evaluationStats, isApproved, isActive, ...userData } = user.toObject();
@@ -210,12 +219,20 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const isProd = process.env.NODE_ENV === "production";
 
+
   res.clearCookie("token", {
     httpOnly: false,
-    secure: isProd,           
-    sameSite: isProd ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",               
   });
+
+  // res.clearCookie("token", {
+  //   httpOnly: false,
+  //   secure: isProd,           
+  //   sameSite: isProd ? "none" : "lax",
+  //   path: "/",               
+  // });
 
   res.status(200).json(new ApiResponse(true, "Logout successful"));
 });
