@@ -188,7 +188,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const isProd = process.env.NODE_ENV === "production";
 
   res.cookie("token", token, {
-    httpOnly: false,
+    httpOnly: true,
     secure: true,
     sameSite: "none",
     path: "/",             
@@ -221,7 +221,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
 
   res.clearCookie("token", {
-    httpOnly: false,
+    httpOnly: true,
     secure: true,
     sameSite: "none",
     path: "/",               
