@@ -90,13 +90,13 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const leadName = `${leadFirstName} ${leadLastName}`.trim();
-  
+
   // Validate password strength for team lead
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   if (!passwordRegex.test(password)) {
     throw new ApiError(400, "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character");
   }
-  
+
   const hashedLeadPassword = await bcrypt.hash(password, 10);
   const teamLead = await User.create({
     userType: "team_lead",
@@ -190,6 +190,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     httpOnly: false,
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
+    path: "/",             
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -208,17 +209,15 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const isProd = process.env.NODE_ENV === "production";
+
   res.clearCookie("token", {
     httpOnly: false,
-    secure: isProd,
+    secure: isProd,           
     sameSite: isProd ? "none" : "lax",
+    path: "/",               
   });
-  res.status(200).json(
-    new ApiResponse(
-      true,
-      "Logout successful"
-    )
-  );
+
+  res.status(200).json(new ApiResponse(true, "Logout successful"));
 });
 
 export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
