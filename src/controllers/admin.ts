@@ -29,17 +29,14 @@ export const dashboard = asyncHandler(async (req: Request, res: Response) => {
         {
             name: "Submissions Created",
             value: totalSubmissions,
-            color: "#3b82f6",
         },
         {
             name: "Submissions Completed",
             value: completedEvaluations,
-            color: "#10b981",
         },
         {
             name: "Pending Evaluations",
             value: pendingEvaluations,
-            color: "#f59e0b",
         }
     ];
 
