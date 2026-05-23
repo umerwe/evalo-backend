@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { TechnicalSupport } from "@/models/TechnicalSupport";
-import { User } from "@/models/User";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { ApiError } from "@/utils/ApiError";
-import { asyncHandler } from "@/utils/asyncHandler";
+import { TechnicalSupport } from "../../models/TechnicalSupport";
+import { User } from "../../models/User";
+import { ApiResponse } from "../../utils/ApiResponse";
+import { ApiError } from "../../utils/ApiError";
+import { asyncHandler } from "../../utils/asyncHandler";
 import { Types } from "mongoose";
-import { AuthRequest } from "@/types";
+import { AuthRequest } from "../../types";
 
 /* ====== TEAM CONTROLLERS ====== */
 

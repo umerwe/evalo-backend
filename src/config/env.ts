@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 export const config = {
     port: process.env.PORT || 5000,
     dbKey: process.env.DB_KEY,

@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { dashboard, evaluate, evaluatedVideos, videos } from "./evaluator.controller"
-import { createRoleBasedJWTMiddleware } from "@/middlewares/getUser"
+import { createRoleBasedJWTMiddleware } from "../../middlewares/getUser"
 import { videoDetails } from "../admin/admin.controller"
 
 const router = Router()

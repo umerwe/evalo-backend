@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { createRoleBasedJWTMiddleware } from "@/middlewares/getUser"
+import { createRoleBasedJWTMiddleware } from "../../middlewares/getUser"
 import { getResult, setResultStatus } from "./result.controller"
 
 const router = Router()

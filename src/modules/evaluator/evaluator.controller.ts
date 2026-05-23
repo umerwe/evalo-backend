@@ -1,15 +1,15 @@
-import { asyncHandler } from "@/utils/asyncHandler";
+import { asyncHandler } from "../../utils/asyncHandler";
 import { Response } from "express";
-import { User } from "@/models/User";
-import { EvaluatorAssignment } from "@/models/EvaluatorAssignment";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { ApiError } from "@/utils/ApiError";
-import { Evaluation } from "@/models/Evaluation";
-import { Submission } from "@/models/Submission";
-import { RecentActivity } from "@/models/recentActivities";
-import { Result } from "@/models/Result";
-import { buildPaginationMeta, getPaginationParams } from "@/services/pagination.service";
-import { AuthRequest } from "@/types";
+import { User } from "../../models/User";
+import { EvaluatorAssignment } from "../../models/EvaluatorAssignment";
+import { ApiResponse } from "../../utils/ApiResponse";
+import { ApiError } from "../../utils/ApiError";
+import { Evaluation } from "../../models/Evaluation";
+import { Submission } from "../../models/Submission";
+import { RecentActivity } from "../../models/recentActivities";
+import { Result } from "../../models/Result";
+import { buildPaginationMeta, getPaginationParams } from "../../services/pagination.service";
+import { AuthRequest } from "../../types";
 
 export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;

@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { Request, Response } from "express";
-import { asyncHandler } from "@/utils/asyncHandler";
-import { User } from "@/models/User";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { ApiError } from "@/utils/ApiError";
-import { Team } from "@/models/Team";
-import { RecentActivity } from "@/models/recentActivities";
-import { config } from "@/config/env";
-import { AuthRequest } from "@/types";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { User } from "../../models/User";
+import { ApiResponse } from "../../utils/ApiResponse";
+import { ApiError } from "../../utils/ApiError";
+import { Team } from "../../models/Team";
+import { RecentActivity } from "../../models/recentActivities";
+import { config } from "../../config/env";
+import { AuthRequest } from "../../types";
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
     const {

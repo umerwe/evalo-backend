@@ -1,19 +1,19 @@
-import { Submission } from "@/models/Submission";
-import { ApiError } from "@/utils/ApiError";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { asyncHandler } from "@/utils/asyncHandler";
+import { Submission } from "../../models/Submission";
+import { ApiError } from "../../utils/ApiError";
+import { ApiResponse } from "../../utils/ApiResponse";
+import { asyncHandler } from "../../utils/asyncHandler";
 import { Response } from "express";
 
-import { User } from "@/models/User";
-import { Team } from "@/models/Team";
-import { EvaluatorAssignment } from "@/models/EvaluatorAssignment";
-import { Evaluation } from "@/models/Evaluation";
+import { User } from "../../models/User";
+import { Team } from "../../models/Team";
+import { EvaluatorAssignment } from "../../models/EvaluatorAssignment";
+import { Evaluation } from "../../models/Evaluation";
 import mongoose from "mongoose";
-import { RecentActivity } from "@/models/recentActivities";
-import { Result } from "@/models/Result";
-import { deleteFromS3 } from "@/services/s3.service";
-import { PendingUpload } from "@/models/PendingUpload";
-import { AuthRequest } from "@/types";
+import { RecentActivity } from "../../models/recentActivities";
+import { Result } from "../../models/Result";
+import { deleteFromS3 } from "../../services/s3.service";
+import { PendingUpload } from "../../models/PendingUpload";
+import { AuthRequest } from "../../types";
 
 export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;

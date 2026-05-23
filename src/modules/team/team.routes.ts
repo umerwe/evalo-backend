@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { evaluatorFeedback, getTeam, submitVideo ,result, detailedResult, dashboard} from "./team.controller";
-import { createRoleBasedJWTMiddleware } from "@/middlewares/getUser";
+import { createRoleBasedJWTMiddleware } from "../../middlewares/getUser";
 
 const router = Router();
 

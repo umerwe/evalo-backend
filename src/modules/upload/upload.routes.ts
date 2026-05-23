@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getUploadUrlHandler, deleteFileHandler } from "./upload.controller";
-import { createRoleBasedJWTMiddleware } from "@/middlewares/getUser";
+import { createRoleBasedJWTMiddleware } from "../../middlewares/getUser";
 
 const router = Router();
 

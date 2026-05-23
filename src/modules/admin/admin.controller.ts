@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "@/utils/asyncHandler";
-import { User } from "@/models/User";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { ApiError } from "@/utils/ApiError";
-import { Team } from "@/models/Team";
-import { Submission } from "@/models/Submission";
-import { EvaluatorAssignment } from "@/models/EvaluatorAssignment";
-import { RecentActivity } from "@/models/recentActivities";
-import { Result } from "@/models/Result";
-import { buildPaginationMeta, getPaginationParams } from "@/services/pagination.service";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { User } from "../../models/User";
+import { ApiResponse } from "../../utils/ApiResponse";
+import { ApiError } from "../../utils/ApiError";
+import { Team } from "../../models/Team";
+import { Submission } from "../../models/Submission";
+import { EvaluatorAssignment } from "../../models/EvaluatorAssignment";
+import { RecentActivity } from "../../models/recentActivities";
+import { Result } from "../../models/Result";
+import { buildPaginationMeta, getPaginationParams } from "../../services/pagination.service";
 
 export const dashboard = asyncHandler(async (req: Request, res: Response) => {
     const stats = {

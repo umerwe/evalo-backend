@@ -1,7 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import "./jobs/cleanupOrphans";
 import { corsOptions } from './config/cors';
 
 dotenv.config();
@@ -14,14 +13,14 @@ app.use(cookieParser());
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
-import authRoute from '@/modules/auth/auth.routes';
-import adminRoute from '@/modules/admin/admin.routes';
-import evaluatorRoute from '@/modules/evaluator/evaluator.routes';
-import teamRoute from '@/modules/team/team.routes';
-import technicalSupportRoute from '@/modules/technicalSupport/technicalSupport.routes';
-import resultRoute from '@/modules/result/result.routes';
-import uploadRoute from '@/modules/upload/upload.routes';
-import { config } from '@/config/env';
+import authRoute from './modules/auth/auth.routes';
+import adminRoute from './modules/admin/admin.routes';
+import evaluatorRoute from './modules/evaluator/evaluator.routes';
+import teamRoute from './modules/team/team.routes';
+import technicalSupportRoute from './modules/technicalSupport/technicalSupport.routes';
+import resultRoute from './modules/result/result.routes';
+import uploadRoute from './modules/upload/upload.routes';
+import { config } from './config/env';
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/admin', adminRoute);

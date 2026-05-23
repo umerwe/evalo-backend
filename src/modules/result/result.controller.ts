@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { Result } from "@/models/Result";
-import { asyncHandler } from "@/utils/asyncHandler";
+import { Result } from "../../models/Result";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 export const setResultStatus = asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.body; // "true" or "false"
