@@ -14,21 +14,21 @@ app.use(cookieParser());
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
-import authRoute from './routes/auth';
-import adminRoute from './routes/admin';
-import evaluatorRoute from './routes/evaluator';
-import teamRoute from './routes/team';
-import technicalSupportRoute from './routes/technicalSupport';
-import resultStatus from './routes/result';
-import uploadRoute from './routes/upload.route';
-import { config } from './config/env';
+import authRoute from '@/modules/auth/auth.routes';
+import adminRoute from '@/modules/admin/admin.routes';
+import evaluatorRoute from '@/modules/evaluator/evaluator.routes';
+import teamRoute from '@/modules/team/team.routes';
+import technicalSupportRoute from '@/modules/technicalSupport/technicalSupport.routes';
+import resultRoute from '@/modules/result/result.routes';
+import uploadRoute from '@/modules/upload/upload.routes';
+import { config } from '@/config/env';
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/admin', adminRoute);
 app.use('/api/v1/evaluator', evaluatorRoute);
 app.use('/api/v1/team', teamRoute);
 app.use('/api/v1/technical-support', technicalSupportRoute);
-app.use('/api/v1/result', resultStatus);
+app.use('/api/v1/result', resultRoute);
 app.use('/api/v1/upload', uploadRoute);
 
 app.get("/", (req: Request, res: Response) => {

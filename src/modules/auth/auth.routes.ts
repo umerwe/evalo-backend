@@ -1,0 +1,17 @@
+import { Router } from "express"
+import { login, register, profile, allUsers, getCurrentUser } from "./auth.controller"
+import { createRoleBasedJWTMiddleware } from "@/middlewares/getUser"
+
+const router = Router()
+
+router.post("/register", register)
+
+router.post("/login", login)
+
+router.get("/profile", createRoleBasedJWTMiddleware(), profile)
+
+router.get("/all-users", createRoleBasedJWTMiddleware(), allUsers)
+
+router.get("/current-user", createRoleBasedJWTMiddleware(), getCurrentUser)
+
+export default router
