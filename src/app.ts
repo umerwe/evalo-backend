@@ -1,40 +1,18 @@
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import { connectDB } from './db';
 import "./jobs/cleanupOrphans";
+import { corsOptions } from './config/cors';
 
 dotenv.config();
 
 const app = express();
 
-const allowedOrigins = (process.env.FRONTEND_URL!)
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked: ${origin}`));
-  },
-  credentials: true,
-}));
+app.use(corsOptions);
 
 app.use(cookieParser());
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
-
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
 
 import authRoute from './routes/auth';
 import adminRoute from './routes/admin';
@@ -43,6 +21,7 @@ import teamRoute from './routes/team';
 import technicalSupportRoute from './routes/technicalSupport';
 import resultStatus from './routes/result';
 import uploadRoute from './routes/upload.route';
+import { config } from './config/env';
 
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/admin', adminRoute);
@@ -63,7 +42,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     success: false,
     message: err.message || "Internal Server Error",
     errors: err.errors || [],
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    stack: config.nodeEnv === "development" ? err.stack : undefined,
   });
 });
 

@@ -1,4 +1,3 @@
-import cloudinary from "../config/cloudinary";
 import { Submission } from "../models/Submission";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 import { ApiError } from '../utils/ApiError';
+import { config } from '../config/env';
 
 export const createRoleBasedJWTMiddleware = () => {
     return async (req: any, res: any, next: any) => {
@@ -15,7 +16,7 @@ export const createRoleBasedJWTMiddleware = () => {
             const token = authHeader.split(" ")[1];
 
             // 2. Verify token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+            const decoded = jwt.verify(token, config.jwtSecret!) as { id: string };
             
             // 3. Check user
             const user = await User.findOne({ _id: decoded.id });

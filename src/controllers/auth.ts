@@ -7,6 +7,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
 import { Team } from "../models/Team";
 import { RecentActivity } from "../models/recentActivities"
+import { config } from "../config/env"
 
 interface AuthRequest extends Request {
   user?: IUser;
@@ -180,7 +181,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // 3. Generate JWT
   const token = jwt.sign(
     { id: user._id, role: user.userType },
-    process.env.JWT_SECRET as string,
+    config.jwtSecret!,
     { expiresIn: "7d" }
   );
 
@@ -190,10 +191,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // 5. Send response (Token included in body)
   res.status(200).json(
     new ApiResponse(
-      true, 
-      "Login successful", 
-      { 
-        user: userData, 
+      true,
+      "Login successful",
+      {
+        user: userData,
         token
       }
     )
