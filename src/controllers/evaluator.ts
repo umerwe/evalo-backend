@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler";
-import { Request, Response } from "express";
-import { IUser, User } from "../models/User";
+import { Response } from "express";
+import { User } from "../models/User";
 import { EvaluatorAssignment } from "../models/EvaluatorAssignment";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
@@ -9,10 +9,8 @@ import { Submission } from "../models/Submission";
 import { RecentActivity } from "../models/recentActivities";
 import { Result } from "../models/Result";
 import { buildPaginationMeta, getPaginationParams } from "../services/pagination.service";
+import { AuthRequest } from "../types";
 
-interface AuthRequest extends Request {
-  user?: IUser;
-}
 export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
 

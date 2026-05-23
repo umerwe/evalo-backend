@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
 import { TechnicalSupport } from "../models/TechnicalSupport";
-import { IUser, User } from "../models/User";
+import { User } from "../models/User";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { Types } from "mongoose";
-
-interface AuthRequest extends Request {
-    user?: IUser;
-}
+import { AuthRequest } from "../types";
 
 /* ====== TEAM CONTROLLERS ====== */
 

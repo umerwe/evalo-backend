@@ -2,9 +2,9 @@ import { Submission } from "../models/Submission";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
-import { Request, Response } from "express";
+import { Response } from "express";
 
-import { IUser, User } from "../models/User";
+import { User } from "../models/User";
 import { Team } from "../models/Team";
 import { EvaluatorAssignment } from "../models/EvaluatorAssignment";
 import { Evaluation } from "../models/Evaluation";
@@ -13,10 +13,7 @@ import { RecentActivity } from "../models/recentActivities";
 import { Result } from "../models/Result";
 import { deleteFromS3 } from "../services/s3.service";
 import { PendingUpload } from "../models/PendingUpload";
-
-interface AuthRequest extends Request {
-    user?: IUser;
-}
+import { AuthRequest } from "../types";
 
 export const dashboard = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?._id;

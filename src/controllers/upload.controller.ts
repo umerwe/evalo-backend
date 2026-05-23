@@ -1,11 +1,7 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { generatePresignedUrl, deleteFromS3 } from "../services/s3.service";
 import { PendingUpload } from "../models/PendingUpload";
-import { IUser } from "../models/User";
-
-interface AuthRequest extends Request {
-  user?: IUser;
-}
+import { AuthRequest } from "../types";
 
 const allowedFolders = ["images", "videos", "docs"] as const;
 type Folder = typeof allowedFolders[number];
