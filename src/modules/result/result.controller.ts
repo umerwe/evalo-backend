@@ -1,38 +1,18 @@
 import { Request, Response } from "express";
-import { Result } from "../../models/Result";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { fetchResultStatus, updateResultStatus } from "./result.service";
 
-export const setResultStatus = asyncHandler(async (req: Request, res: Response) => {
-    const { status } = req.body; // "true" or "false"
+export const setResultStatus = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { status } = req.body;
+        const data = await updateResultStatus(status);
 
-    // Convert string to boolean EXACTLY as sent
-    const isPublished = status === "true";
-
-    // Find the single result document
-    let result = await Result.findOne();
-
-    if (!result) {
-        // Create new if it does not exist
-        result = await Result.create({
-            isPublished
-        });
-    } else {
-        // Update existing
-        result.isPublished = isPublished;
-        await result.save();
+        return res.json(data);
     }
-
-    res.json({
-        message: `Result is now ${isPublished ? "Published" : "Unpublished"}`,
-        isPublished: result.isPublished
-    });
-});
-
+);
 
 export const getResult = asyncHandler(async (req: Request, res: Response) => {
-    const result = await Result.findOne();
-    
-    res.json({ 
-        isPublished: result?.isPublished ?? false 
-    });
+    const data = await fetchResultStatus();
+
+    return res.json(data);
 });

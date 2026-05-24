@@ -15,6 +15,10 @@ export interface ISubmission extends Document {
   submissionStatus: "draft" | "submitted" | "under_review" | "evaluated";
 }
 
+export type SubmitVideoPayload = Pick<ISubmission["videoDetails"],
+  "title" | "description" | "topic" | "learningOutcomes" | "videoKey" | "thumbnailKey"
+> & { durationInSeconds: number };
+
 const SubmissionSchema = new Schema<ISubmission>(
   {
     teamId: { type: Schema.Types.ObjectId, ref: "Team", required: true },
