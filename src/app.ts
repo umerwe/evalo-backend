@@ -19,6 +19,10 @@ app.use(cookieParser());
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
+app.get("/favicon.ico", (req: Request, res: Response) => {
+  res.status(204).end();
+});
+
 // routes
 app.use('/api/v1/auth', authRoute);
 app.use('/api/v1/admin', adminRoute);
