@@ -1,6 +1,6 @@
-import { TechnicalSupport } from "@/models/TechnicalSupport";
-import { User } from "@/models/User";
-import { ApiError } from "@/utils/ApiError";
+import { TechnicalSupport } from "../../models/TechnicalSupport";
+import { User } from "../../models/User";
+import { ApiError } from "../../utils/ApiError";
 import { Types } from "mongoose";
 
 export const createTeamMessage = async (teamId: string, message: string) => {
